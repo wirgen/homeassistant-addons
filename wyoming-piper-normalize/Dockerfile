@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && pip install --no-cache-dir -U pip setuptools wheel \
     && pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
     \
-    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir \
         "wyoming-piper-normalize @ https://github.com/wirgen/wyoming-piper-normalize/archive/refs/tags/v${WPN_VERSION}.tar.gz"
