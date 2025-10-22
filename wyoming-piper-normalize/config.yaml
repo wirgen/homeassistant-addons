@@ -39,4 +39,4 @@ schema:
 ports:
   10200/tcp: null
 homeassistant: 2023.8.0
-image: ghcr.io/wirgen/{arch}-wyoming-piper-normalize
+image: ghcr.io/wirgen/haos-addon-{arch}-wyoming-piper-normalize
