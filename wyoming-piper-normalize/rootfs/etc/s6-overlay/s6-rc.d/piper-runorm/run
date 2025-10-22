@@ -1,0 +1,30 @@
+#!/command/with-contenv bashio
+# vim: ft=bash
+# shellcheck shell=bash
+# ==============================================================================
+# Start Piper RUNorm service
+# ==============================================================================
+flags=()
+if bashio::config.true 'streaming'; then
+    flags+=('--streaming')
+fi
+
+if bashio::config.true 'update_voices'; then
+    flags+=('--update-voices')
+fi
+
+if bashio::config.true 'debug_logging'; then
+    flags+=('--debug')
+fi
+
+# shellcheck disable=SC2068
+exec python3 -m wyoming_piper_normalize \
+    --uri 'tcp://0.0.0.0:10200' \
+    --data-dir /data \
+    --voice "$(bashio::config 'voice')" \
+    --speaker "$(bashio::config 'speaker')" \
+    --volume "$(bashio::config 'volume')" \
+    --length-scale "$(bashio::config 'length_scale')" \
+    --noise-scale "$(bashio::config 'noise_scale')" \
+    --noise-w "$(bashio::config 'noise_w')" \
+    ${flags[@]}

@@ -1,0 +1,42 @@
+name: Piper RUNorm
+version: 1.0.0
+slug: piper-runorm
+description: Wyoming protocol server for the Piper text-to-speech system, featuring Russian text normalization via RUNorm
+url: "https://github.com/wirgen/homeassistant-addons/tree/main/wyoming-piper-normalize"
+arch:
+  - amd64
+  - aarch64
+init: false
+discovery:
+  - wyoming
+backup_exclude:
+  - "models*"
+  - "*.onnx"
+  - "*.onnx.json"
+map:
+  - share
+options:
+  voice: ru_RU-irina-medium
+  speaker: 0
+  volume: 1.0
+  length_scale: 0.7
+  noise_scale: 0.667
+  noise_w: 0.333
+  streaming: true
+  update_voices: true
+  debug_logging: false
+schema:
+  voice: |
+    list(ru_RU-denis-medium|ru_RU-dmitri-medium|ru_RU-irina-medium|ru_RU-ruslan-medium)
+  speaker: int
+  volume: float
+  length_scale: float
+  noise_scale: float
+  noise_w: float
+  streaming: bool
+  update_voices: bool
+  debug_logging: bool
+ports:
+  10200/tcp: null
+homeassistant: 2023.8.0
+image: ghcr.io/wirgen/{arch}-wyoming-piper-normalize
