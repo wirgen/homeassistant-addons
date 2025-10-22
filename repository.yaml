@@ -1,4 +1,3 @@
-# https://developers.home-assistant.io/docs/add-ons/repository#repository-configuration
-name: Example Home Assistant add-on repository
-url: 'https://github.com/home-assistant/addons-example'
-maintainer: Awesome Maintainer <awesome@example.com>
+name: Add-ons by Dzianis Nikifaraŭ
+url: 'https://github.com/wirgen/homeassistant-addons'
+maintainer: Dzianis Nikifaraŭ <dzianis@wirgen.by>

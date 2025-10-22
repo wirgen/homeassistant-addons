@@ -1,24 +1,26 @@
-# Example Home Assistant add-on repository
+# Home Assistant add-on repository
 
-This repository can be used as a "blueprint" for add-on development to help you get started.
+Use button
 
-Add-on documentation: <https://developers.home-assistant.io/docs/add-ons>
+[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fwirgen%2Fhomeassistant-addons)
 
-[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fhome-assistant%2Faddons-example)
+or go to the Add-on Store and manually add a new repository `https://github.com/wirgen/homeassistant-addons`
+using the "Repositories" option in the top-right corner.
 
 ## Add-ons
 
 This repository contains the following add-ons
 
-### [Example add-on](./example)
+### [Wyoming Piper Normalize](./wyoming-piper-normalize)
 
-![Supports aarch64 Architecture][aarch64-shield]
-![Supports amd64 Architecture][amd64-shield]
-![Supports armhf Architecture][armhf-shield]
-![Supports armv7 Architecture][armv7-shield]
-![Supports i386 Architecture][i386-shield]
+![Supports aarch64 Architecture][aarch64-yes-shield]
+![Supports amd64 Architecture][amd64-yes-shield]
+![Supports armhf Architecture][armhf-no-shield]
+![Supports armv7 Architecture][armv7-no-shield]
+![Supports i386 Architecture][i386-no-shield]
 
-_Example add-on to use as a blueprint for new add-ons._
+_[Wyoming protocol](https://github.com/rhasspy/wyoming) server for the [Piper](https://github.com/rhasspy/piper/)
+text-to-speech system, featuring Russian text normalization via [RUNorm](https://github.com/Den4ikAI/runorm)._
 
 <!--
 
@@ -39,8 +41,13 @@ Notes to developers after forking or using the github template feature:
 - Do awesome stuff!
  -->
 
-[aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
-[amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg
-[armhf-shield]: https://img.shields.io/badge/armhf-yes-green.svg
-[armv7-shield]: https://img.shields.io/badge/armv7-yes-green.svg
-[i386-shield]: https://img.shields.io/badge/i386-yes-green.svg
+[aarch64-yes-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
+[amd64-yes-shield]: https://img.shields.io/badge/amd64-yes-green.svg
+[armhf-yes-shield]: https://img.shields.io/badge/armhf-yes-green.svg
+[armv7-yes-shield]: https://img.shields.io/badge/armv7-yes-green.svg
+[i386-yes-shield]: https://img.shields.io/badge/i386-yes-green.svg
+[aarch64-no-shield]: https://img.shields.io/badge/aarch64-no-red.svg
+[amd64-no-shield]: https://img.shields.io/badge/amd64-no-red.svg
+[armhf-no-shield]: https://img.shields.io/badge/armhf-no-red.svg
+[armv7-no-shield]: https://img.shields.io/badge/armv7-no-red.svg
+[i386-no-shield]: https://img.shields.io/badge/i386-no-red.svg
