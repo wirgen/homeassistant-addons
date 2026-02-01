@@ -83,6 +83,11 @@ async def main():
             meters = await get_data(args.api_id, args.api_hash, args.session)
             _LOGGER.debug(meters)
 
+            if not meters:
+                _LOGGER.warning("No meter data received")
+                await asyncio.sleep(args.interval * 60)
+                continue
+
             prefix = "tg_iotans"
 
             publish.single(
