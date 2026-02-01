@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import json
 import logging
+from datetime import timezone, timedelta
 
 import paho.mqtt.publish as publish
 from tg_iotans import get_data
@@ -112,6 +113,8 @@ async def main():
                 auth=mqtt_auth,
             )
 
+            await asyncio.sleep(5)
+
             publish.single(
                 f"{prefix}/addon/state",
                 payload=json.dumps({
@@ -185,6 +188,8 @@ async def main():
                     auth=mqtt_auth,
                 )
 
+                await asyncio.sleep(5)
+
                 # Publish availability
                 publish.single(
                     f"{prefix}/{mac_cleaned}/availability",
@@ -202,7 +207,9 @@ async def main():
                         "type": meter['type'],
                         "status": meter['status'],
                         "location": meter['location'],
-                        "last_update": meter['datetime'].isoformat(),
+                        "last_update": meter['datetime']
+                        .replace(tzinfo=timezone(timedelta(hours=3)))
+                        .isoformat(),
                     }),
                     hostname=mqtt_host,
                     port=mqtt_port,
