@@ -10,13 +10,13 @@ init: false
 services:
   - mqtt:need
 options:
-  api_id: ""
+  api_id: 0
   api_hash: ""
   session: ""
   interval: 240
   debug: false
 schema:
-  api_id: str
+  api_id: int
   api_hash: str
   session: str
   interval: int

@@ -4,7 +4,7 @@ FROM ${BUILD_FROM}
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ARG BUILD_ARCH
-ARG WPN_VERSION
+ARG TGI_VERSION
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir \
-        "tg-iotans @ https://github.com/wirgen/tg-iotans/archive/refs/tags/v${WPN_VERSION}.tar.gz"
+        "tg-iotans @ https://github.com/wirgen/tg-iotans/archive/refs/tags/v${TGI_VERSION}.tar.gz"
 
 WORKDIR /
 COPY rootfs /

@@ -19,4 +19,5 @@ exec python3 /run.py \
     --mqtt-port "$(bashio::services mqtt "port")" \
     --mqtt-username "$(bashio::services mqtt "username")" \
     --mqtt-password "$(bashio::services mqtt "password")" \
+    --interval "$(bashio::config 'interval')" \
     ${flags[@]}

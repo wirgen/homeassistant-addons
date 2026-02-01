@@ -7,4 +7,4 @@ labels:
   org.opencontainers.image.source: "https://github.com/wirgen/homeassistant-addons"
   org.opencontainers.image.licenses: "Apache License 2.0"
 args:
-  WPN_VERSION: 1.0.0
+  TGI_VERSION: 1.0.1
