@@ -1,0 +1,22 @@
+#!/command/with-contenv bashio
+# vim: ft=bash
+# shellcheck shell=bash
+# ==============================================================================
+# Start Piper RUNorm service
+# ==============================================================================
+flags=()
+
+if bashio::config.true 'debug'; then
+    flags+=('--debug')
+fi
+
+# shellcheck disable=SC2068
+exec python3 /run.py \
+    --api-id "$(bashio::config 'api_id')" \
+    --api-hash "$(bashio::config 'api_hash')" \
+    --session "$(bashio::config 'session')" \
+    --mqtt-host "$(bashio::services mqtt "host")" \
+    --mqtt-port "$(bashio::services mqtt "port")" \
+    --mqtt-username "$(bashio::services mqtt "username")" \
+    --mqtt-password "$(bashio::services mqtt "password")" \
+    ${flags[@]}

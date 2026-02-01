@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """TG IoT Sensors addon for Home Assistant."""
-
+import argparse
 import asyncio
-import json
 import logging
 # import os
 # import sys
@@ -20,31 +19,53 @@ def clean_mac_for_topic(mac: str):
 
 async def main():
     """Main entrypoint for the addon."""
-    config = json.loads("/data/options.json")
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--api-id",
+        type=str,
+        help="Telegram App Api ID",
+    )
+    parser.add_argument(
+        "--api-hash",
+        type=str,
+        help="Telegram App Api Hash",
+    )
+    parser.add_argument(
+        "--session",
+        type=str,
+        help="Session Token",
+    )
+    #
+    parser.add_argument(
+        "--mqtt-host",
+        type=str,
+        help="MQTT Host",
+    )
+    parser.add_argument(
+        "--mqtt-port",
+        type=int,
+        help="MQTT Port",
+    )
+    parser.add_argument(
+        "--mqtt-username",
+        type=int,
+        help="MQTT Username",
+    )
+    parser.add_argument(
+        "--mqtt-password",
+        type=int,
+        help="MQTT Password",
+    )
+    #
+    parser.add_argument("--debug", action="store_true", help="Log DEBUG messages")
+    args = parser.parse_args()
 
-    _LOGGER.error(config)
-    
-    # api_id = config.get("api_id")
-    # api_hash = config.get("api_hash")
-    # session = config.get("session")
-    # interval = config.get("interval", 240)
-    # debug = config.get("debug", False)
-    #
-    # if not api_id or not api_hash or not session:
-    #     _LOGGER.error("Missing required configuration: api_id, api_hash, or session")
-    #     return
-    #
-    # mqtt = config.get('mqtt', {})
-    #
-    # mqtt_host = mqtt.get("host")
-    # mqtt_port = int(mqtt.get("port", 1883))
-    # mqtt_username = mqtt.get("username")
-    # mqtt_password = mqtt.get("password")
-    #
-    # mqtt_auth = None
-    # if mqtt_username and mqtt_password:
-    #     mqtt_auth = {'username': mqtt_username, 'password': mqtt_password}
-    #
+    logging.basicConfig(
+        level=logging.DEBUG if args.debug else logging.INFO, format=args.log_format
+    )
+
+    _LOGGER.debug(args)
+
     # while True:
     #     try:
     #         from tg_iotans import main as tg_main_async

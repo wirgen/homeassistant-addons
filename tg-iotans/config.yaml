@@ -1,11 +1,12 @@
 name: TG Iotans
 version: 1.0.0
 slug: tg-iotans
-description: Collects meter readings from Telegram IotansBot and publishes to MQTT
+description: Collects meter readings from Telegram MyIotansBot and publishes to MQTT
 url: "https://github.com/wirgen/homeassistant-addons/tree/main/tg-iotans"
 arch:
   - amd64
   - aarch64
+init: false
 services:
   - mqtt:need
 options:

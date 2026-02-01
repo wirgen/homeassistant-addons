@@ -1,16 +1,21 @@
 configuration:
   api_id:
     name: API ID
-    description: Ваш Telegram App API ID
+    description: >-
+      Ваш Telegram App API ID
   api_hash:
     name: API Hash
-    description: Ваш Telegram App API Hash
+    description: >-
+      Ваш Telegram App API Hash
   session:
     name: Токен сессии
-    description: Токен сессии для аккаунта Telegram
+    description: >-
+      Токен сессии для аккаунта Telegram
   interval:
     name: Интервал опроса
-    description: Интервал в минутах для опроса счетчиков (по умолчанию: 240)
+    description: >-
+      Интервал в минутах для опроса счетчиков (по умолчанию: 240)
   debug:
     name: Режим отладки
-    description: Включить ведение журнала отладки
+    description: >-
+      Включить ведение журнала отладки

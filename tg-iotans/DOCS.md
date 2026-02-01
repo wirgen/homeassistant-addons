@@ -69,12 +69,12 @@ Telegram App Api Hash from [official Telegram developer portal](https://my.teleg
 
 Session token generated using `tg_iotans`. See [Generating the Session Token](#generating-the-session-token)
 
-### Option: `interval_minutes`
+### Option: `interval`
 
 Polling frequency in minutes.
 
 By default, 240 minutes (4 hours).
 
-### Option: `debug_logging`
+### Option: `debug`
 
 Print DEBUG level messages to the add-on's log.
