@@ -2,10 +2,11 @@
 """TG IoT Sensors addon for Home Assistant."""
 import argparse
 import asyncio
+import json
 import logging
 
+import paho.mqtt.publish as publish
 from tg_iotans import get_data
-#import paho.mqtt.publish as publish
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -69,79 +70,141 @@ async def main():
         level=logging.DEBUG if args.debug else logging.INFO
     )
 
+    mqtt_host = args.mqtt_host
+    mqtt_port = int(args.mqtt_port)
+    mqtt_auth = None if args.mqtt_username is None or args.mqtt_password is None else \
+        {
+            "username": args.mqtt_username,
+            "password": args.mqtt_password,
+        }
+
     while True:
         try:
             meters = await get_data(args.api_id, args.api_hash, args.session)
+            _LOGGER.debug(meters)
 
-            _LOGGER.info(meters)
+            prefix = "tg_iotans"
 
-            # for meter in meters:
-            #     mac_cleaned = clean_mac_for_topic(meter['mac'])
-            #
-            #     device_id = f"tg_iotans_{mac_cleaned}"
-            #     device_name = f"TG Water Meter {meter['mac']}"
-            #     sensor_name = None
-            #
-            #     if meter['type'] == 'hot':
-            #         sensor_name = f"{device_name} (Hot)"
-            #
-            #     if meter['type'] == 'cold':
-            #         sensor_name = f"{device_name} (Cold)"
-            #
-            #     if sensor_name is None:
-            #         continue
-            #
-            #     state_topic = f"homeassistant/sensor/{device_id}_water_meter/state"
-            #     config_topic = f"homeassistant/sensor/{device_id}_water_meter/config"
-            #
-            #     sensor_config = {
-            #         "name": sensor_name,
-            #         "state_topic": state_topic,
-            #         "unit_of_measurement": "m³",
-            #         "value_template": "{{ value_json.value }}",
-            #         "device": {
-            #             "identifiers": [device_id],
-            #             "manufacturer": "TG Iotans Sensors",
-            #             "name": device_name,
-            #             "model": "Water Meter"
-            #         },
-            #         "availability_topic": f"homeassistant/sensor/{device_id}_water_meter/availability",
-            #         "payload_available": "online",
-            #         "payload_not_available": "offline"
-            #     }
-            #
-            #     publish.single(
-            #         config_topic,
-            #         payload=json.dumps(sensor_config),
-            #         hostname=mqtt_host,
-            #         port=mqtt_port,
-            #         auth=mqtt_auth
-            #     )
-            #
-            #     publish.single(
-            #         f"homeassistant/sensor/{device_id}_water_meter/availability",
-            #         payload="online",
-            #         hostname=mqtt_host,
-            #         port=mqtt_port,
-            #         auth=mqtt_auth
-            #     )
-            #
-            #     state_payload = {
-            #         "value": round(float(meter['value']), 3),
-            #         "status": meter['status'],
-            #         "location": meter['location'],
-            #         "datetime": meter['datetime'].isoformat() if hasattr(meter['datetime'], 'isoformat') else str(meter['datetime'])
-            #     }
-            #
-            #     publish.single(
-            #         state_topic,
-            #         payload=json.dumps(state_payload),
-            #         hostname=mqtt_host,
-            #         port=mqtt_port,
-            #         auth=mqtt_auth
-            #     )
-            #
-            #     _LOGGER.info(f"Published water meter data for {meter['mac']}: {meter['value']} m³")
+            publish.single(
+                "homeassistant/sensor/tg_iotans_addon/version/config",
+                payload=json.dumps({
+                    "name": "Version",
+                    "unique_id": "tg_iotans_addon_version",
+                    "state_topic": f"{prefix}/addon/state",
+                    "value_template": "{{ value_json.version }}",
+                    "icon": "mdi:access-point-network",
+                    "device": {
+                        "identifiers": ["tg_iotans_addon"],
+                        "manufacturer": "TG Iotans",
+                        "model": "Addon",
+                        "name": "TG Iotans Addon",
+                        "sw_version": "1.0.0",
+                    },
+                }),
+                retain=True,
+                hostname=mqtt_host,
+                port=mqtt_port,
+                auth=mqtt_auth,
+            )
+
+            publish.single(
+                f"{prefix}/addon/state",
+                payload=json.dumps({
+                    "version": "1.0.0",
+                }),
+                retain=True,
+                hostname=mqtt_host,
+                port=mqtt_port,
+                auth=mqtt_auth,
+            )
+
+            for meter in meters:
+                mac_cleaned = clean_mac_for_topic(meter['mac'])
+                device_id = f"{prefix}_{mac_cleaned}"
+
+                # Meter configs
+                publish.single(
+                    f"homeassistant/sensor/{device_id}/water/config",
+                    payload=json.dumps({
+                        "unique_id": f"{device_id}_water",
+                        "device_class": "water",
+                        "state_topic": f"{prefix}/{mac_cleaned}/state",
+                        "state_class": "total_increasing",
+                        "unit_of_measurement": "m³",
+                        "value_template": "{{ value_json.value | float }}",
+                        "json_attributes_topic": f"{prefix}/{mac_cleaned}/state",
+                        "device": {
+                            "identifiers": [device_id],
+                            "name": f"Water Meter {meter['mac']}",
+                            "serial_number": meter['mac'],
+                            "via_device": "tg_iotans_addon"
+                        },
+                        "availability_topic": f"{prefix}/{mac_cleaned}/availability"
+                    }),
+                    hostname=mqtt_host,
+                    port=mqtt_port,
+                    auth=mqtt_auth,
+                )
+                publish.single(
+                    f"homeassistant/sensor/{device_id}/status/config",
+                    payload=json.dumps({
+                        "name": "Status",
+                        "unique_id": f"{device_id}_status",
+                        "state_topic": f"{prefix}/{mac_cleaned}/state",
+                        "value_template": "{{ value_json.status }}",
+                        "icon": "mdi:information-outline",
+                        "device": {
+                            "identifiers": [device_id],
+                        },
+                        "availability_topic": f"{prefix}/{mac_cleaned}/availability"
+                    }),
+                    hostname=mqtt_host,
+                    port=mqtt_port,
+                    auth=mqtt_auth,
+                )
+                publish.single(
+                    f"homeassistant/sensor/{device_id}/last_update/config",
+                    payload=json.dumps({
+                        "name": "Last Update",
+                        "unique_id": f"{device_id}_last_update",
+                        "device_class": "timestamp",
+                        "state_topic": f"{prefix}/{mac_cleaned}/state",
+                        "value_template": "{{ value_json.last_update }}",
+                        "device": {
+                            "identifiers": [device_id],
+                        },
+                        "availability_topic": f"{prefix}/{mac_cleaned}/availability"
+                    }),
+                    hostname=mqtt_host,
+                    port=mqtt_port,
+                    auth=mqtt_auth,
+                )
+
+                # Publish availability
+                publish.single(
+                    f"{prefix}/{mac_cleaned}/availability",
+                    payload="online",
+                    hostname=mqtt_host,
+                    port=mqtt_port,
+                    auth=mqtt_auth
+                )
+
+                # Publish state
+                publish.single(
+                    f"{prefix}/{mac_cleaned}/state",
+                    payload=json.dumps({
+                        "value": meter['value'],
+                        "type": meter['type'],
+                        "status": meter['status'],
+                        "location": meter['location'],
+                        "last_update": meter['datetime'].isoformat(),
+                    }),
+                    hostname=mqtt_host,
+                    port=mqtt_port,
+                    auth=mqtt_auth
+                )
+
+                _LOGGER.debug(f"Published water meter data for {meter['mac']}: {meter['value']} m³")
 
             await asyncio.sleep(args.interval * 60)
 
