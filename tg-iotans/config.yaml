@@ -6,7 +6,6 @@ url: "https://github.com/wirgen/homeassistant-addons/tree/main/tg-iotans"
 arch:
   - amd64
   - aarch64
-init: false
 services:
   - mqtt:need
 options:
@@ -23,3 +22,4 @@ schema:
   debug: bool
 homeassistant: 2023.8.0
 image: ghcr.io/wirgen/haos-addon-{arch}-tg-iotans
+stage: experimental
