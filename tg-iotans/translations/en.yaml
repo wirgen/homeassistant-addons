@@ -1,0 +1,16 @@
+configuration:
+  api_id:
+    name: API ID
+    description: Your Telegram App API ID
+  api_hash:
+    name: API Hash
+    description: Your Telegram App API Hash
+  session:
+    name: Session Token
+    description: Session token for the Telegram account
+  interval:
+    name: Polling Interval
+    description: Interval in minutes to poll the meters (default: 240)
+  debug:
+    name: Debug Mode
+    description: Enable debug logging
