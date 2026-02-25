@@ -11,6 +11,19 @@ using the "Repositories" option in the top-right corner.
 
 This repository contains the following add-ons
 
+### [TG Iotans](./tg-iotans)
+
+![Supports aarch64 Architecture][aarch64-yes-shield]
+![Supports amd64 Architecture][amd64-yes-shield]
+![Supports armhf Architecture][armhf-no-shield]
+![Supports armv7 Architecture][armv7-no-shield]
+![Supports i386 Architecture][i386-no-shield]
+
+_This Home Assistant add-on runs a lightweight Telegram client that automatically retrieves available water meter
+readings from the [MyIotansBot](https://t.me/MyIotansBot).
+It is designed to integrate these readings into your Home Assistant environment for further automation, monitoring, and
+analytics._
+
 ### [Wyoming Piper Normalize](./wyoming-piper-normalize)
 
 ![Supports aarch64 Architecture][aarch64-yes-shield]
