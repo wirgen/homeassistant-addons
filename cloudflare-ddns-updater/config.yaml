@@ -1,0 +1,23 @@
+name: Cloudflare IPv6 DDNS
+version: 1.0.0
+slug: cloudflare_ipv6_ddns
+description: Update Cloudflare DNS with IPv6 EUI-64 addresses
+url: "https://github.com/wirgen/homeassistant-addons/tree/main/cloudflare-ddns-updater"
+arch:
+  - amd64
+  - aarch64
+init: false
+startup: services
+options:
+  config: []
+schema:
+  config:
+    - zone: str
+      token: str
+      check_interval: int(min=10, max=86400)
+      domains:
+        - name: str
+          mac: str
+homeassistant: 2023.8.0
+image: ghcr.io/wirgen/haos-addon-{arch}-cloudflare-ipv6-ddns
+stage: experimental

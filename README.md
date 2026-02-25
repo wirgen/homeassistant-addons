@@ -11,6 +11,19 @@ using the "Repositories" option in the top-right corner.
 
 This repository contains the following add-ons
 
+### [Cloudflare IPv6 DDNS](./cloudflare-ddns-updater)
+
+![Supports aarch64 Architecture][aarch64-yes-shield]
+![Supports amd64 Architecture][amd64-yes-shield]
+![Supports armhf Architecture][armhf-no-shield]
+![Supports armv7 Architecture][armv7-no-shield]
+![Supports i386 Architecture][i386-no-shield]
+
+_This Home Assistant add-on updates Cloudflare DNS AAAA records with IPv6 addresses generated using EUI-64 format from
+MAC addresses. When your IPv6 prefix changes (e.g., due to ISP reassignment), all configured domains are automatically
+updated with the new addresses. This is useful for maintaining reliable access to devices on networks with dynamic IPv6
+prefixes._
+
 ### [TG Iotans](./tg-iotans)
 
 ![Supports aarch64 Architecture][aarch64-yes-shield]
