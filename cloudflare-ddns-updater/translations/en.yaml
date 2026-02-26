@@ -1,0 +1,21 @@
+configuration:
+  zone:
+    name: Zone
+    description: >-
+      Your Cloudflare zone (domain name), e.g., example.com
+  token:
+    name: API Token
+    description: >-
+      Cloudflare API token with Zone DNS edit permissions
+  check_interval:
+    name: Check interval
+    description: >-
+      How often to check for IPv6 prefix changes, in seconds
+  domains:
+    name: Domains
+    description: >-
+      List of domains to update with their MAC addresses for EUI-64 calculation
+  debug:
+    name: Debug logging
+    description: >-
+      Print DEBUG level messages to the add-on's log

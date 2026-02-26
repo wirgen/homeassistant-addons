@@ -1,0 +1,21 @@
+configuration:
+  zone:
+    name: Зона
+    description: >-
+      Ваша зона Cloudflare (имя домена), например, example.com
+  token:
+    name: API токен
+    description: >-
+      Токен API Cloudflare с правами на редактирование DNS зоны
+  check_interval:
+    name: Интервал проверки
+    description: >-
+      Как часто проверять изменения IPv6 префикса, в секундах
+  domains:
+    name: Домены
+    description: >-
+      Список доменов для обновления с их MAC-адресами для вычисления EUI-64
+  debug:
+    name: Отладочное логирование
+    description: >-
+      Выводить сообщения уровня DEBUG в журнал дополнения

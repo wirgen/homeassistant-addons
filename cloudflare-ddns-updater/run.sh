@@ -11,7 +11,15 @@ if bashio::config.true 'debug'; then
 fi
 
 # Write config to JSON file for Python to read
-bashio::options --json > /tmp/config.json
+cat > /tmp/config.json <<EOF
+{
+  "zone": "$(bashio::config 'zone')",
+  "token": "$(bashio::config 'token')",
+  "check_interval": $(bashio::config 'check_interval'),
+  "debug": $(bashio::config 'debug'),
+  "domains": $(bashio::config 'domains' --json)
+}
+EOF
 
 # Start Python script
 exec python3 /ddns_updater.py --config /tmp/config.json ${flags[@]}
