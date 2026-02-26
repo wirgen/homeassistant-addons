@@ -1,5 +1,5 @@
 name: Piper RUNorm
-version: 1.0.0
+version: 1.0.1
 slug: piper-runorm
 description: Wyoming protocol server for the Piper text-to-speech system, featuring Russian text normalization via RUNorm
 url: "https://github.com/wirgen/homeassistant-addons/tree/main/wyoming-piper-normalize"

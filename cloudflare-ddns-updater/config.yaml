@@ -1,5 +1,5 @@
 name: Cloudflare IPv6 DDNS
-version: 1.0.0
+version: 1.0.1
 slug: cloudflare_ipv6_ddns
 description: Update Cloudflare DNS with IPv6 EUI-64 addresses
 url: "https://github.com/wirgen/homeassistant-addons/tree/main/cloudflare-ddns-updater"
