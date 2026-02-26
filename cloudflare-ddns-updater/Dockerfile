@@ -18,6 +18,7 @@ WORKDIR /
 COPY requirements.txt /tmp/
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
+COPY ddns_updater.py /
 COPY run.sh /
 RUN chmod +x /run.sh
 
