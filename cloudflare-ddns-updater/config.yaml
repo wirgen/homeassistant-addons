@@ -14,7 +14,7 @@ schema:
   config:
     - zone: str
       token: str
-      check_interval: int(min=10, max=86400)
+      check_interval: int
       domains:
         - name: str
           mac: str
