@@ -10,8 +10,5 @@ if bashio::config.true 'debug'; then
     flags+=('--debug')
 fi
 
-# Write config to JSON file for Python to read
-bashio::var.json options > /tmp/config.json
-
 # Start Python script
-exec python3 /ddns_updater.py --config /tmp/config.json ${flags[@]}
+exec python3 /ddns_updater.py --config /data/options.json ${flags[@]}
