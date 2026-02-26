@@ -1,5 +1,6 @@
-#!/command/with-contenv bashio
+#!/usr/bin/with-contenv bashio
 # vim: ft=bash
+# shellcheck shell=bash
 # ==============================================================================
 # Cloudflare IPv6 DDNS Updater
 # ==============================================================================
@@ -9,6 +10,7 @@ if bashio::config.true 'debug'; then
     flags+=('--debug')
 fi
 
+# Write config to JSON file for Python to read
 bashio::options --json > /tmp/config.json
 
 # Start Python script
