@@ -9,7 +9,6 @@ if bashio::config.true 'debug'; then
     flags+=('--debug')
 fi
 
-# Write config to JSON file for Python to read
 bashio::options --json > /tmp/config.json
 
 # Start Python script

@@ -2,7 +2,7 @@ name: Builder
 
 env:
   BUILD_ARGS: "--test"
-  MONITORED_FILES: "build.yaml config.yaml Dockerfile rootfs run.py"
+  MONITORED_FILES: "build.yaml config.yaml Dockerfile rootfs run.py ddns_updater.py run.sh"
 
 on:
   push:
