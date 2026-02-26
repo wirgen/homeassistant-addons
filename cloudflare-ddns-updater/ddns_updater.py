@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Cloudflare IPv6 DDNS Updater with EUI-64 support."""
 
+import argparse
 import ipaddress
 import json
 import logging
@@ -30,48 +31,56 @@ def signal_handler(signum, frame) -> None:
     logger.info(f"Received signal {signum}, shutting down gracefully...")
 
 
-def load_config() -> Optional[Dict[str, Any]]:
-    """Load configuration from environment variables.
+def load_config(config_file: str) -> Optional[Dict[str, Any]]:
+    """Load configuration from JSON file.
+
+    Args:
+        config_file: Path to configuration JSON file.
 
     Returns:
         Optional[Dict[str, Any]]: Parsed configuration dict or None if invalid.
     """
-    logger.debug("Loading configuration from environment variables...")
+    logger.debug(f"Loading configuration from {config_file}...")
 
-    zone = os.getenv('ZONE')
-    token = os.getenv('TOKEN')
-    check_interval_str = os.getenv('CHECK_INTERVAL', '10')
-    domains_str = os.getenv('DOMAINS', '[]')
-
-    logger.debug(f"ZONE env variable set: {zone is not None}")
-    logger.debug(f"TOKEN env variable set: {token is not None}")
-    logger.debug(f"CHECK_INTERVAL: {check_interval_str}")
-    logger.debug(f"DOMAINS raw: {domains_str[:100] if len(domains_str) > 100 else domains_str}")
+    if not os.path.exists(config_file):
+        logger.error(f"Config file not found: {config_file}")
+        return None
 
     try:
-        check_interval = int(check_interval_str)
-        domains = json.loads(domains_str)
-        logger.debug(f"Parsed check_interval: {check_interval}")
-        logger.debug(f"Parsed domains: {len(domains)} domain(s)")
-        if logger.isEnabledFor(logging.DEBUG):
-            for i, domain in enumerate(domains):
-                logger.debug(f"  Domain {i}: {domain}")
-    except ValueError as e:
-        logger.error(f"Failed to parse check_interval: {e}")
-        return None
-    except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse domains JSON: {e}")
-        logger.error(f"Raw domains value: {domains_str}")
+        with open(config_file, 'r') as f:
+            config = json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        logger.error(f"Failed to read config file: {e}")
         return None
 
-    config = {
+    logger.debug(f"Config loaded: {json.dumps(config, indent=2)}")
+
+    zone = config.get('zone')
+    token = config.get('token')
+    check_interval = config.get('check_interval', 10)
+    domains = config.get('domains', [])
+
+    if not isinstance(domains, list):
+        logger.error("'domains' must be a list")
+        return None
+
+    logger.debug(f"Parsed zone: {zone}")
+    logger.debug(f"Parsed token: {'***' if token else 'None'}")
+    logger.debug(f"Parsed check_interval: {check_interval}")
+    logger.debug(f"Parsed domains: {len(domains)} domain(s)")
+
+    if logger.isEnabledFor(logging.DEBUG):
+        for i, domain in enumerate(domains):
+            logger.debug(f"  Domain {i}: {domain}")
+
+    final_config = {
         'zone': zone,
         'token': token,
         'check_interval': check_interval,
         'domains': domains,
     }
     logger.info(f"Loaded config: zone='{zone}', check_interval={check_interval}, domains={len(domains)}")
-    return config
+    return final_config
 
 
 def validate_config(config: Optional[Dict[str, Any]]) -> bool:
@@ -225,7 +234,7 @@ def get_ipv6_address(api_urls: Optional[List[str]] = None) -> Optional[str]:
             ipaddress.IPv6Address(ipv6)
             return ipv6
         except (requests.RequestException, ValueError) as e:
-            logger.warning(f"Failed to get IPv6 from {api_url}: {e}")
+            logger.debug(f"Failed to get IPv6 from {api_url}: {e}")
             continue
 
     logger.error("Failed to get IPv6 address from all APIs")
@@ -304,7 +313,7 @@ def get_dns_record(zone_id: str, name: str, token: str) -> Optional[Tuple[str, s
 
         records = data.get('result', [])
         if not records:
-            logger.warning(f"DNS record not found: {name}")
+            logger.debug(f"DNS record not found: {name}")
             return None
 
         record_id = records[0]['id']
@@ -343,6 +352,8 @@ def update_dns_record(zone_id: str, record_id: str, name: str,
         "ttl": 1  # Automatic TTL
     }
 
+    logger.debug(f"Updating {name} -> {ipv6}")
+
     try:
         response = requests.put(url, headers=headers, json=payload, timeout=10)
         response.raise_for_status()
@@ -358,6 +369,53 @@ def update_dns_record(zone_id: str, record_id: str, name: str,
         return True
     except requests.RequestException as e:
         logger.error(f"Failed to update DNS record {name}: {e}")
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(f"Traceback:", exc_info=True)
+        return False
+
+
+def create_dns_record(zone_id: str, name: str, ipv6: str, token: str) -> bool:
+    """Create new DNS record.
+
+    Args:
+        zone_id: Cloudflare zone ID.
+        name: Full domain name.
+        ipv6: IPv6 address to set.
+        token: Cloudflare API token.
+
+    Returns:
+        bool: True if creation succeeded, False otherwise.
+    """
+    url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "type": "AAAA",
+        "name": name,
+        "content": ipv6,
+        "ttl": 1,  # Automatic TTL,
+        "proxied": False
+    }
+
+    logger.debug(f"Creating new DNS record {name} -> {ipv6}")
+
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        if not data.get('success'):
+            logger.error(f"Cloudflare API error creating {name}: {data.get('errors')}")
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(f"Traceback:", exc_info=True)
+            return False
+
+        logger.info(f"Created new DNS record {name} -> {ipv6}")
+        return True
+    except requests.RequestException as e:
+        logger.error(f"Failed to create DNS record {name}: {e}")
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(f"Traceback:", exc_info=True)
         return False
@@ -396,18 +454,33 @@ def update_zone(zone: str, token: str, domains: List[Dict],
         try:
             # Generate EUI-64 from MAC
             eui64_suffix = mac_to_eui64(mac)
-            full_ipv6 = f"{ipv6_prefix}:{eui64_suffix}"
+            # Build full IPv6 address
+            # Split suffix into 4 hextets (16 bits each)
+            suffix_parts = [
+                eui64_suffix[0:4],
+                eui64_suffix[4:8],
+                eui64_suffix[8:12],
+                eui64_suffix[12:16]
+            ]
+            # Strip trailing colons from prefix and add single colon
+            prefix_base = ipv6_prefix.rstrip(':')
+            # Build full address: prefix_base:hextet1:hextet2:hextet3:hextet4
+            full_ipv6 = prefix_base + ':' + ':'.join(suffix_parts)
 
             # Get record ID and current value
             record_info = get_dns_record(zone_id, name, token)
+
             if not record_info:
+                # DNS record doesn't exist, create it
+                logger.debug(f"Zone {zone}: DNS record {name} not found, creating new record")
+                create_dns_record(zone_id, name, full_ipv6, token)
                 continue
 
             record_id, current_value = record_info
 
             # Check if update is needed
             if current_value == full_ipv6:
-                logger.info(f"Zone {zone}: {name} already has correct IP {full_ipv6}, skipping update")
+                logger.debug(f"Zone {zone}: {name} already has correct IP {full_ipv6}, skipping update")
                 continue
 
             logger.info(f"Zone {zone}: Updating {name} from {current_value} to {full_ipv6}")
@@ -428,18 +501,23 @@ def main() -> None:
 
     Sets up signal handlers, validates config, and runs the update loop.
     """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Cloudflare IPv6 DDNS Updater')
+    parser.add_argument('--debug', action='store_true', help='Enable debug logging')
+    parser.add_argument('--config', type=str, default='/tmp/config.json',
+                        help='Path to configuration JSON file (default: /tmp/config.json)')
+    args = parser.parse_args()
+
     # Set up signal handlers for graceful shutdown
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
-    # Apply debug mode before loading config
-    debug_enabled = os.getenv('DEBUG', 'false').lower() in ('true', '1', 'yes')
-    if debug_enabled:
+    # Apply debug mode
+    if args.debug:
         logger.setLevel(logging.DEBUG)
         logger.debug("Debug mode enabled")
-        logger.debug(f"Environment variables: ZONE={bool(os.getenv('ZONE'))}, TOKEN={bool(os.getenv('TOKEN'))}")
 
-    config = load_config()
+    config = load_config(args.config)
 
     if not config:
         logger.warning("No configuration provided, exiting")
@@ -462,12 +540,11 @@ def main() -> None:
     domains = config.get('domains', [])
 
     logger.info(f"Starting Cloudflare IPv6 DDNS Updater for zone: {zone}")
-    logger.info(f"Monitoring {len(domains)} domain(s)")
-    logger.debug(f"Debug mode: {debug_enabled}")
+    logger.debug(f"Monitoring {len(domains)} domain(s)")
     logger.debug(f"Check interval: {check_interval} seconds")
 
     # Force first update on startup
-    logger.info("Performing initial update on startup...")
+    logger.debug("Performing initial update on startup...")
     first_run = True
 
     while not shutdown_requested:
@@ -492,7 +569,7 @@ def main() -> None:
         # Check if prefix changed or first run
         if new_prefix != current_prefix or first_run:
             if first_run:
-                logger.info("First run - forcing DNS update")
+                logger.debug("First run - forcing DNS update")
                 current_prefix = new_prefix
             else:
                 logger.info(f"IPv6 prefix changed from {current_prefix} to {new_prefix}")

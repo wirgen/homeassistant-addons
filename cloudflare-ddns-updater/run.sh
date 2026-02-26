@@ -1,11 +1,16 @@
-#!/usr/bin/with-contenv bashio
+#!/command/with-contenv bashio
+# vim: ft=bash
+# ==============================================================================
+# Cloudflare IPv6 DDNS Updater
+# ==============================================================================
 
-# Export CONFIG environment variables for Python
-export ZONE="$(bashio::config 'zone')"
-export TOKEN="$(bashio::config 'token')"
-export CHECK_INTERVAL="$(bashio::config 'check_interval')"
-export DOMAINS="$(bashio::config 'domains' --json)"
-export DEBUG="$(bashio::config 'debug')"
+flags=()
+if bashio::config.true 'debug'; then
+    flags+=('--debug')
+fi
+
+# Write config to JSON file for Python to read
+bashio::options --json > /tmp/config.json
 
 # Start Python script
-python3 /ddns_updater.py
+exec python3 /ddns_updater.py --config /tmp/config.json ${flags[@]}
