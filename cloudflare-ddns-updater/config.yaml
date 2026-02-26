@@ -9,15 +9,19 @@ arch:
 init: false
 startup: services
 options:
-  config: []
+  zone: ""
+  token: ""
+  check_interval: 10
+  domains:
+    - name: ""
+      mac: ""
 schema:
-  config:
-    - zone: str
-      token: str
-      check_interval: int
-      domains:
-        - name: str
-          mac: str
+  zone: str
+  token: str
+  check_interval: int
+  domains:
+    - name: str
+      mac: str
 homeassistant: 2023.8.0
 image: ghcr.io/wirgen/haos-addon-{arch}-cloudflare-ipv6-ddns
 stage: experimental

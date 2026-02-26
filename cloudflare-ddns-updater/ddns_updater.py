@@ -8,7 +8,7 @@ import os
 import signal
 import sys
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 
 import requests
 
@@ -30,63 +30,59 @@ def signal_handler(signum, frame) -> None:
     logger.info(f"Received signal {signum}, shutting down gracefully...")
 
 
-def load_config() -> List[Dict]:
-    """Load configuration from environment variable.
+def load_config() -> Optional[Dict[str, Any]]:
+    """Load configuration from environment variables.
 
     Returns:
-        List[Dict]: Parsed configuration JSON as a list of zone configs.
+        Optional[Dict[str, Any]]: Parsed configuration dict or None if invalid.
     """
-    config_json = os.getenv('CONFIG', '[]')
-    try:
-        return json.loads(config_json)
-    except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse config: {e}")
-        sys.exit(1)
+    config = {
+        'zone': os.getenv('ZONE'),
+        'token': os.getenv('TOKEN'),
+        'check_interval': int(os.getenv('CHECK_INTERVAL', '10')),
+        'domains': json.loads(os.getenv('DOMAINS', '[]')),
+    }
+    return config
 
 
-def validate_config(config: List[Dict]) -> bool:
+def validate_config(config: Optional[Dict[str, Any]]) -> bool:
     """Validate configuration structure.
 
     Args:
-        config: Configuration list to validate.
+        config: Configuration dict to validate.
 
     Returns:
         bool: True if config is valid, False otherwise.
     """
-    if not isinstance(config, list):
-        logger.error("Config must be a list")
+    if not isinstance(config, dict):
+        logger.error("Config must be a dict")
         return False
 
-    for i, zone_config in enumerate(config):
-        if not isinstance(zone_config, dict):
-            logger.error(f"Zone config at index {i} must be a dict")
+    if 'zone' not in config or not config['zone']:
+        logger.error("Config missing 'zone' field")
+        return False
+
+    if 'token' not in config or not config['token']:
+        logger.error("Config missing 'token' field")
+        return False
+
+    domains = config.get('domains', [])
+    if not isinstance(domains, list):
+        logger.error("'domains' must be a list")
+        return False
+
+    for j, domain in enumerate(domains):
+        if not isinstance(domain, dict):
+            logger.error(f"Domain at index {j} must be a dict")
             return False
 
-        if 'zone' not in zone_config:
-            logger.error(f"Zone config at index {i} missing 'zone' field")
+        if 'name' not in domain or not domain['name']:
+            logger.error(f"Domain at index {j} missing 'name' field")
             return False
 
-        if 'token' not in zone_config:
-            logger.error(f"Zone config for {zone_config.get('zone', i)} missing 'token' field")
+        if 'mac' not in domain or not domain['mac']:
+            logger.error(f"Domain {domain.get('name', j)} missing 'mac' field")
             return False
-
-        domains = zone_config.get('domains', [])
-        if not isinstance(domains, list):
-            logger.error(f"Zone config for {zone_config.get('zone')} 'domains' must be a list")
-            return False
-
-        for j, domain in enumerate(domains):
-            if not isinstance(domain, dict):
-                logger.error(f"Domain at index {j} in {zone_config.get('zone')} must be a dict")
-                return False
-
-            if 'name' not in domain:
-                logger.error(f"Domain at index {j} in {zone_config.get('zone')} missing 'name' field")
-                return False
-
-            if 'mac' not in domain:
-                logger.error(f"Domain {domain.get('name', j)} in {zone_config.get('zone')} missing 'mac' field")
-                return False
 
     return True
 
@@ -422,32 +418,25 @@ def main() -> None:
     current_prefix: Optional[str] = None
     zone_cache: Dict[str, Optional[str]] = {}
 
-    # Use per-zone intervals, default to 60 seconds
-    zone_check_intervals: Dict[str, int] = {}
-    for zone_config in config:
-        zone = zone_config.get('zone')
-        interval = zone_config.get('check_interval', 60)
-        zone_check_intervals[zone] = interval
+    # Get check interval from config, default to 10 seconds
+    check_interval = config.get('check_interval', 10)
 
-    logger.info("Starting Cloudflare IPv6 DDNS Updater")
-    logger.info(f"Monitoring {len(config)} zone(s): {', '.join(zone_check_intervals.keys())}")
+    zone = config.get('zone')
+    logger.info(f"Starting Cloudflare IPv6 DDNS Updater for zone: {zone}")
 
     while not shutdown_requested:
         # Get current IPv6 address
         ipv6 = get_ipv6_address()
         if not ipv6:
             logger.warning("Failed to get IPv6 address, retrying in 30s")
-            # Use the minimum check interval or 30s
-            sleep_time = min(min(zone_check_intervals.values()), 30)
-            time.sleep(sleep_time)
+            time.sleep(30)
             continue
 
         # Extract prefix
         new_prefix = extract_ipv6_prefix(ipv6)
         if not new_prefix:
             logger.warning("Failed to extract IPv6 prefix, retrying in 30s")
-            sleep_time = min(min(zone_check_intervals.values()), 30)
-            time.sleep(sleep_time)
+            time.sleep(30)
             continue
 
         # Check if prefix changed
@@ -455,24 +444,20 @@ def main() -> None:
             logger.info(f"IPv6 prefix changed from {current_prefix} to {new_prefix}")
             current_prefix = new_prefix
 
-            # Update all configured zones
-            for zone_config in config:
-                zone = zone_config.get('zone')
-                token = zone_config.get('token')
-                domains = zone_config.get('domains', [])
+            # Update configured zone
+            token = config.get('token')
+            domains = config.get('domains', [])
 
-                if not zone or not token:
-                    logger.warning(f"Skipping invalid zone config: {zone_config}")
-                    continue
+            if not zone or not token:
+                logger.warning(f"Skipping invalid zone config")
+                continue
 
-                update_zone(zone, token, domains, new_prefix, zone_cache)
+            update_zone(zone, token, domains, new_prefix, zone_cache)
 
-        # Wait for next check (use minimum interval across all zones)
-        sleep_time = min(zone_check_intervals.values())
-        logger.debug(f"Next check in {sleep_time} seconds")
+        logger.debug(f"Next check in {check_interval} seconds")
 
         # Sleep in small increments to check for shutdown signal
-        sleep_end = time.time() + sleep_time
+        sleep_end = time.time() + check_interval
         while time.time() < sleep_end and not shutdown_requested:
             time.sleep(1)
 
