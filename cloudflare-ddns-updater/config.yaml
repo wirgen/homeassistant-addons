@@ -13,6 +13,7 @@ options:
   token: ""
   check_interval: 10
   domains: []
+  debug: false
 schema:
   zone: str
   token: str
@@ -20,6 +21,7 @@ schema:
   domains:
     - name: str
       mac: str
+  debug: bool
 homeassistant: 2023.8.0
 image: ghcr.io/wirgen/haos-addon-{arch}-cloudflare-ipv6-ddns
 stage: experimental

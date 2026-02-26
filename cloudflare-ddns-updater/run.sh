@@ -4,7 +4,8 @@
 export ZONE="$(bashio::config 'zone')"
 export TOKEN="$(bashio::config 'token')"
 export CHECK_INTERVAL="$(bashio::config 'check_interval')"
-export DOMAINS="$(bashio::config 'domains')"
+export DOMAINS="$(bashio::config 'domains' --json)"
+export DEBUG="$(bashio::config 'debug')"
 
 # Start Python script
 python3 /ddns_updater.py

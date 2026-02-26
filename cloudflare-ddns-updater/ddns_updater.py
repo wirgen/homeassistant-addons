@@ -36,12 +36,41 @@ def load_config() -> Optional[Dict[str, Any]]:
     Returns:
         Optional[Dict[str, Any]]: Parsed configuration dict or None if invalid.
     """
+    logger.debug("Loading configuration from environment variables...")
+
+    zone = os.getenv('ZONE')
+    token = os.getenv('TOKEN')
+    check_interval_str = os.getenv('CHECK_INTERVAL', '10')
+    domains_str = os.getenv('DOMAINS', '[]')
+
+    logger.debug(f"ZONE env variable set: {zone is not None}")
+    logger.debug(f"TOKEN env variable set: {token is not None}")
+    logger.debug(f"CHECK_INTERVAL: {check_interval_str}")
+    logger.debug(f"DOMAINS raw: {domains_str[:100] if len(domains_str) > 100 else domains_str}")
+
+    try:
+        check_interval = int(check_interval_str)
+        domains = json.loads(domains_str)
+        logger.debug(f"Parsed check_interval: {check_interval}")
+        logger.debug(f"Parsed domains: {len(domains)} domain(s)")
+        if logger.isEnabledFor(logging.DEBUG):
+            for i, domain in enumerate(domains):
+                logger.debug(f"  Domain {i}: {domain}")
+    except ValueError as e:
+        logger.error(f"Failed to parse check_interval: {e}")
+        return None
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse domains JSON: {e}")
+        logger.error(f"Raw domains value: {domains_str}")
+        return None
+
     config = {
-        'zone': os.getenv('ZONE'),
-        'token': os.getenv('TOKEN'),
-        'check_interval': int(os.getenv('CHECK_INTERVAL', '10')),
-        'domains': json.loads(os.getenv('DOMAINS', '[]')),
+        'zone': zone,
+        'token': token,
+        'check_interval': check_interval,
+        'domains': domains,
     }
+    logger.info(f"Loaded config: zone='{zone}', check_interval={check_interval}, domains={len(domains)}")
     return config
 
 
@@ -403,6 +432,13 @@ def main() -> None:
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
+    # Apply debug mode before loading config
+    debug_enabled = os.getenv('DEBUG', 'false').lower() in ('true', '1', 'yes')
+    if debug_enabled:
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Debug mode enabled")
+        logger.debug(f"Environment variables: ZONE={bool(os.getenv('ZONE'))}, TOKEN={bool(os.getenv('TOKEN'))}")
+
     config = load_config()
 
     if not config:
@@ -422,7 +458,17 @@ def main() -> None:
     check_interval = config.get('check_interval', 10)
 
     zone = config.get('zone')
+    token = config.get('token')
+    domains = config.get('domains', [])
+
     logger.info(f"Starting Cloudflare IPv6 DDNS Updater for zone: {zone}")
+    logger.info(f"Monitoring {len(domains)} domain(s)")
+    logger.debug(f"Debug mode: {debug_enabled}")
+    logger.debug(f"Check interval: {check_interval} seconds")
+
+    # Force first update on startup
+    logger.info("Performing initial update on startup...")
+    first_run = True
 
     while not shutdown_requested:
         # Get current IPv6 address
@@ -432,6 +478,8 @@ def main() -> None:
             time.sleep(30)
             continue
 
+        logger.debug(f"Retrieved IPv6 address: {ipv6}")
+
         # Extract prefix
         new_prefix = extract_ipv6_prefix(ipv6)
         if not new_prefix:
@@ -439,20 +487,25 @@ def main() -> None:
             time.sleep(30)
             continue
 
-        # Check if prefix changed
-        if new_prefix != current_prefix:
-            logger.info(f"IPv6 prefix changed from {current_prefix} to {new_prefix}")
-            current_prefix = new_prefix
+        logger.debug(f"Extracted IPv6 prefix: {new_prefix}")
+
+        # Check if prefix changed or first run
+        if new_prefix != current_prefix or first_run:
+            if first_run:
+                logger.info("First run - forcing DNS update")
+                current_prefix = new_prefix
+            else:
+                logger.info(f"IPv6 prefix changed from {current_prefix} to {new_prefix}")
+                current_prefix = new_prefix
 
             # Update configured zone
-            token = config.get('token')
-            domains = config.get('domains', [])
-
             if not zone or not token:
                 logger.warning(f"Skipping invalid zone config")
                 continue
 
+            logger.debug(f"Calling update_zone with prefix: {new_prefix}")
             update_zone(zone, token, domains, new_prefix, zone_cache)
+            first_run = False
 
         logger.debug(f"Next check in {check_interval} seconds")
 
