@@ -12,9 +12,7 @@ options:
   zone: ""
   token: ""
   check_interval: 10
-  domains:
-    - name: ""
-      mac: ""
+  domains: []
 schema:
   zone: str
   token: str
