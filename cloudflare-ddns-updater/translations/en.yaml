@@ -10,11 +10,18 @@ configuration:
   check_interval:
     name: Check interval
     description: >-
-      How often to check for IPv6 prefix changes, in seconds
+      How often to check for IPv6 prefix changes, in minutes
   domains:
     name: Domains
     description: >-
       List of domains to update with their MAC addresses for EUI-64 calculation
+    fields:
+      name:
+        name: Domain name
+        description: Full domain name, e.g., subdomain.example.com
+      mac:
+        name: MAC address
+        description: MAC address for EUI-64 calculation, e.g., aa:bb:cc:dd:ee:ff
   debug:
     name: Debug logging
     description: >-

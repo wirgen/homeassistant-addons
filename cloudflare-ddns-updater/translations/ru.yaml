@@ -10,11 +10,18 @@ configuration:
   check_interval:
     name: Интервал проверки
     description: >-
-      Как часто проверять изменения IPv6 префикса, в секундах
+      Как часто проверять изменения IPv6 префикса, в минутах
   domains:
     name: Домены
     description: >-
       Список доменов для обновления с их MAC-адресами для вычисления EUI-64
+    fields:
+      name:
+        name: Имя домена
+        description: Полное имя домена, например, subdomain.example.com
+      mac:
+        name: MAC-адрес
+        description: MAC-адрес для вычисления EUI-64, например, aa:bb:cc:dd:ee:ff
   debug:
     name: Отладочное логирование
     description: >-

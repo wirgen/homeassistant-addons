@@ -478,10 +478,15 @@ def update_zone(zone: str, token: str, domains: List[Dict],
 
             record_id, current_value = record_info
 
-            # Check if update is needed
-            if current_value == full_ipv6:
-                logger.debug(f"Zone {zone}: {name} already has correct IP {full_ipv6}, skipping update")
-                continue
+            # Check if update is needed (normalize IPv6 for comparison)
+            try:
+                current_ipv6 = ipaddress.IPv6Address(current_value)
+                new_ipv6 = ipaddress.IPv6Address(full_ipv6)
+                if current_ipv6 == new_ipv6:
+                    logger.debug(f"Zone {zone}: {name} already has correct IP {full_ipv6}, skipping update")
+                    continue
+            except ValueError as e:
+                logger.debug(f"Zone {zone}: Failed to compare IPs: {e}, forcing update")
 
             logger.info(f"Zone {zone}: Updating {name} from {current_value} to {full_ipv6}")
             update_dns_record(zone_id, record_id, name, full_ipv6, token)
@@ -532,8 +537,8 @@ def main() -> None:
     current_prefix: Optional[str] = None
     zone_cache: Dict[str, Optional[str]] = {}
 
-    # Get check interval from config, default to 10 seconds
-    check_interval = config.get('check_interval', 10)
+    # Get check interval from config, default to 5 minutes (convert to seconds)
+    check_interval = config.get('check_interval', 5) * 60
 
     zone = config.get('zone')
     token = config.get('token')
@@ -541,7 +546,7 @@ def main() -> None:
 
     logger.info(f"Starting Cloudflare IPv6 DDNS Updater for zone: {zone}")
     logger.debug(f"Monitoring {len(domains)} domain(s)")
-    logger.debug(f"Check interval: {check_interval} seconds")
+    logger.debug(f"Check interval: {check_interval // 60} minutes ({check_interval} seconds)")
 
     # Force first update on startup
     logger.debug("Performing initial update on startup...")
